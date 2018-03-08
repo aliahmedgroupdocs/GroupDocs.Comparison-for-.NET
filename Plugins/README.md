@@ -1,3 +1,1 @@
-##GroupDocs.Comparison for .NET Plugins
-
-GroupDocs.Comparison for .NET Plugins are coming soon. Please stay tuned...
+[Explore GroupDocs.Comparison API for .NET Examples using Visual Studio Plugin](https://github.com/groupdocs-Comparison/GroupDocs.Comparison-for-.NET/tree/master/Plugins/GroupDocs_Comparison_VSPlugin)

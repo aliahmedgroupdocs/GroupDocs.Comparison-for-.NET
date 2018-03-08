@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using GroupDocs.Comparison.Common.Changes;
 using GroupDocs.Viewer;
+using GroupDocs.Comparison.Common.ComparisonSettings;
 
 namespace GroupDocsComparisonMvcDemo
 {
@@ -17,7 +18,8 @@ namespace GroupDocsComparisonMvcDemo
         internal string resultFileName;
         private readonly string _contextName;
         private readonly ComparisonWidgetSettings _settings;
-        private GroupDocs.Comparison.Comparison comparison;
+        private GroupDocs.Comparison.Comparer comparison;
+        private static GroupDocs.Comparison.Common.ICompareResult results;
 
         internal string ContextName
         {
@@ -50,26 +52,26 @@ namespace GroupDocsComparisonMvcDemo
         /// Set the source file for comparison
         /// </summary>
         /// <param name="filePath">Absolute path to the source file for comparison</param>
-        public void SourceFileName(string filePath)
+        public void SourceFileName(string filePath, string documentPassword = "")
         {
             //Combine source file path
             var sourceFile = filePath.Replace("\\", "\\\\");
             sourceFile = Path.Combine(_settings.RootStoragePath, sourceFile);
             //Open source document
-            _source = new ComparingDocument(sourceFile);
+            _source = new ComparingDocument(sourceFile, documentPassword);
         }
 
         /// <summary>
         /// Set the target file for comparison
         /// </summary>
         /// <param name="filePath">Absolute path to the target file for comparison</param>
-        public void TargetFileName(string filePath)
+        public void TargetFileName(string filePath, string documentPassword = "")
         {
             //Combine target file path
             var targetFile = filePath.Replace("\\", "\\\\");
             targetFile = Path.Combine(_settings.RootStoragePath, targetFile);
             //Open target document
-            _target = new ComparingDocument(targetFile);
+            _target = new ComparingDocument(targetFile, documentPassword);
         }
 
 
@@ -102,12 +104,15 @@ namespace GroupDocsComparisonMvcDemo
         public ChangeInfo[] Compare()
         {
             //Create new comparison
-            comparison = new GroupDocs.Comparison.Comparison();
+            comparison = new GroupDocs.Comparison.Comparer();
             var resultName = Path.Combine(_settings.RootStoragePath, resultFileName);
             //Compare documents
-            Stream stream = comparison.Compare(_source.Content, _target.Content, resultName, _settings.ComparisonBehavior, _target.Extention);
+            results = comparison.Compare(_source.Content, _source.DocumentPassword, _target.Content, _target.DocumentPassword, new GroupDocs.Comparison.Common.ComparisonSettings.ComparisonSettings { DeletedItemsStyle = new StyleSettings { StrikeThrough = true }, GenerateSummaryPage = true, CalculateComponentCoordinates = true });
+
             //Get changes
-            var changes = comparison.GetChanges();
+            var changes = results.GetChanges();
+
+            results.SaveDocument(resultName);
 
             //Cut changes and return
             return changes.ToArray();
@@ -120,10 +125,10 @@ namespace GroupDocsComparisonMvcDemo
         public void UpdateChanges(ChangeInfo[] changesToUpdate)
         {
             //Combine result file name
-            resultFileName = name + Guid.NewGuid() + "." + _target.Extention;
+            resultFileName = Guid.NewGuid() + name;
             var resultFile = Path.Combine(_settings.RootStoragePath, resultFileName);
             //Updete changes
-            comparison.UpdateChanges(changesToUpdate, resultFile);
+            results.UpdateChanges(changesToUpdate);
         }
 
         public ChangeInfo[] Changes
@@ -131,7 +136,7 @@ namespace GroupDocsComparisonMvcDemo
             get
             {
                 //Return changes
-                return comparison.GetChanges();
+                return results.GetChanges();
             }
         }
     }
